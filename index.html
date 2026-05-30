@@ -93,12 +93,11 @@
   <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 
   <script>
-    // 1) CHANGE THESE TWO VALUES
-    const SUPABASE_URL = "https://boxeompdpkejqpaydgtz.supabase.co/rest/v1/";
-    const SUPABASE_ANON_KEY = "sb_publishable_G28HSK483SvF3tZnZ2nC8Q_kiZwyj0Y";t
+    // 1) Correct values
+    const SUPABASE_URL = "https://boxeompdpkejqpaydgtz.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_G28HSK483SvF3tZnZ2nC8Q_kiZwyj0Y";
 
-    // 2) CHANGE THIS TO THE TABLE YOU WANT TO STORE FORM ENTRIES IN
-    // For safety, I recommend a dedicated table, e.g. "graduate_submissions"
+    // 2) Table to store submissions
     const TABLE_NAME = "graduate_submissions";
 
     const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -119,4 +118,28 @@
       const payload = {
         student_id: formData.get("student_id") || null,
         first_name: formData.get("first_name") || null,
-        last_name:
+        last_name: formData.get("last_name") || null,
+        email: formData.get("email") || null,
+        date_of_birth: formData.get("date_of_birth") || null,
+        notes: formData.get("notes") || null,
+        submitted_at: new Date().toISOString()
+      };
+
+      const { error } = await client.from(TABLE_NAME).insert(payload);
+
+      if (error) {
+        console.error(error);
+        statusEl.textContent = "There was an error submitting the form. Please try again.";
+        statusEl.className = "err";
+      } else {
+        statusEl.textContent = "Thank you! Your information has been submitted.";
+        statusEl.className = "ok";
+        form.reset();
+      }
+
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Submit";
+    });
+  </script>
+</body>
+</html>
