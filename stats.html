@@ -1,157 +1,210 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Graduate Submissions Stats</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="utf-8"/>
+  <title>Graduate Outcomes — Statistics</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <style>
-    body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      margin: 0;
-      padding: 1rem;
-      background: #f6f6f6;
+    :root{
+      --usach-orange:#f47c20; --usach-blue:#003865; --bg:#f3f4f6; --card:#fff;
+      --muted:#6b7280; --text:#111827;
     }
-    h1, h2 {
-      margin: 0.5rem 0;
-    }
-    .chart-container {
-      background: #fff;
-      border-radius: 6px;
-      padding: 1rem;
-      margin-bottom: 1rem;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-    }
-    #status {
-      margin-bottom: 1rem;
-      font-size: 0.9rem;
-      color: #555;
-    }
-    .err { color: #b91c1c; }
+    body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;margin:0;background:var(--bg);color:var(--text)}
+    header{background:var(--card);border-bottom:4px solid var(--usach-orange)}
+    .wrap{max-width:1100px;margin:0 auto;padding:1rem}
+    h1{margin:0;padding:.5rem 0;color:var(--usach-blue)}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem}
+    .full{grid-column:1/-1}
+    .card{background:var(--card);padding:1rem;border-radius:10px;border:1px solid #e6e6e6;box-shadow:0 8px 24px rgba(15,23,42,0.06)}
+    canvas{max-width:100%}
+    #status{color:var(--muted);margin-top:.5rem}
+    @media(max-width:900px){.grid{grid-template-columns:1fr}.wrap{padding:.75rem}}
   </style>
 </head>
 <body>
-  <h1>Graduate Submissions – Stats</h1>
-  <div id="status">Loading…</div>
+  <header>
+    <div class="wrap">
+      <h1>Graduate Outcomes — Statistics</h1>
+      <div id="status">Loading data…</div>
+    </div>
+  </header>
 
-  <div class="chart-container">
-    <h2>Submissions per Month</h2>
-    <canvas id="perMonthChart"></canvas>
-  </div>
+  <main class="wrap">
+    <section class="grid">
+      <div class="card">
+        <h3>Counts by Current Status</h3>
+        <canvas id="statusPie"></canvas>
+      </div>
 
-  <div class="chart-container">
-    <h2>Submissions per Birth Year</h2>
-    <canvas id="perBirthYearChart"></canvas>
-  </div>
+      <div class="card">
+        <h3>Graduates by Work Country (top 10)</h3>
+        <canvas id="countryBar"></canvas>
+      </div>
 
-  <!-- Supabase JS -->
+      <div class="card full">
+        <h3>Graduations Over Time (by month)</h3>
+        <canvas id="timeLine"></canvas>
+      </div>
+
+      <div class="card full">
+        <h3>Salary Distribution (Histogram)</h3>
+        <canvas id="salaryBar"></canvas>
+      </div>
+    </section>
+  </main>
+
+  <!-- libs -->
   <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <script>
-    // 1) Set your Supabase details
-    const SUPABASE_URL = "https://boxeompdpkejqpaydgtz.supabase.co"; // your project URL
-    const SUPABASE_ANON_KEY = "sb_publishable_G28HSK483SvF3tZnZ2nC8Q_kiZwyj0Y"; // your anon key
-    const TABLE_NAME = "graduate_submissions";
+    // --- CONFIG: replace with your Supabase values ---
+    const SUPABASE_URL = "https://YOUR-PROJECT-REF.supabase.co";
+    const SUPABASE_ANON_KEY = "YOUR_ANON_PUBLIC_KEY";
+    const TABLE = "graduate_outcomes_survey";
+    // --------------------------------------------------
 
     const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
     const statusEl = document.getElementById("status");
 
-    async function loadData() {
+    async function load() {
       statusEl.textContent = "Loading data from Supabase…";
 
+      // select relevant columns
       const { data, error } = await client
-        .from(TABLE_NAME)
-        .select("id, submitted_at, date_of_birth")
-        .order("submitted_at", { ascending: true });
+        .from(TABLE)
+        .select("id,graduation_date,current_status,work_country,salary_annual,created_at")
+        .order("created_at", { ascending: true });
 
       if (error) {
-        console.error(error);
         statusEl.textContent = "Error loading data.";
-        statusEl.className = "err";
+        console.error(error);
+        return;
+      }
+      statusEl.textContent = `Loaded ${data.length} records.`;
+
+      renderCharts(data);
+    }
+
+    function renderCharts(rows) {
+      const byStatus = {};
+      const byCountry = {};
+      const salaryVals = [];
+      const byMonth = {};
+
+      rows.forEach(r => {
+        // status
+        const status = r.current_status || "Unknown";
+        byStatus[status] = (byStatus[status]||0) + 1;
+
+        // country
+        const c = (r.work_country || "Unknown");
+        byCountry[c] = (byCountry[c]||0) + 1;
+
+        // salary
+        if (r.salary_annual !== null && r.salary_annual !== undefined && r.salary_annual !== "") {
+          const num = Number(r.salary_annual);
+          if (!isNaN(num) && num > 0) salaryVals.push(num);
+        }
+
+        // month
+        const gd = r.graduation_date || r.created_at || null;
+        if (gd) {
+          const d = new Date(gd);
+          if (!isNaN(d)) {
+            const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+            byMonth[key] = (byMonth[key]||0) + 1;
+          }
+        }
+      });
+
+      drawStatusPie(byStatus);
+      drawCountryBar(byCountry);
+      drawTimeLine(byMonth);
+      drawSalaryHistogram(salaryVals);
+    }
+
+    // --- Chart helpers ---
+    function drawStatusPie(obj) {
+      const labels = Object.keys(obj).sort((a,b)=>obj[b]-obj[a]);
+      const data = labels.map(l=>obj[l]);
+      const ctx = document.getElementById("statusPie").getContext("2d");
+      new Chart(ctx, {
+        type: "pie",
+        data: {
+          labels,
+          datasets: [{ data, backgroundColor: palette(labels.length) }]
+        },
+        options: { responsive:true }
+      });
+    }
+
+    function drawCountryBar(obj) {
+      // top 10
+      const entries = Object.entries(obj).sort((a,b)=>b[1]-a[1]).slice(0,10);
+      const labels = entries.map(e=>e[0]);
+      const data = entries.map(e=>e[1]);
+      const ctx = document.getElementById("countryBar").getContext("2d");
+      new Chart(ctx, {
+        type: "bar",
+        data: { labels, datasets:[{label:"Count",data,backgroundColor:"rgba(0,56,101,0.8)"}] },
+        options: { responsive:true, scales:{ y:{ beginAtZero:true, ticks:{ precision:0 } } } }
+      });
+    }
+
+    function drawTimeLine(obj) {
+      const labels = Object.keys(obj).sort();
+      const data = labels.map(l=>obj[l]);
+      const ctx = document.getElementById("timeLine").getContext("2d");
+      new Chart(ctx, {
+        type: "line",
+        data: { labels, datasets:[{label:"Graduates", data, borderColor:"rgba(244,124,32,0.9)", backgroundColor:"rgba(244,124,32,0.15)", fill:true, tension:0.25}] },
+        options: { responsive:true, scales:{ y:{ beginAtZero:true, ticks:{ precision:0 } } } }
+      });
+    }
+
+    function drawSalaryHistogram(values) {
+      if (!values || values.length===0) {
+        const ctx = document.getElementById("salaryBar").getContext("2d");
+        ctx.canvas.parentNode.innerHTML = "<p style='color:#666;margin:0'>No salary data available.</p>";
         return;
       }
 
-      statusEl.textContent = `Loaded ${data.length} submissions.`;
-
-      drawPerMonthChart(data);
-      drawPerBirthYearChart(data);
-    }
-
-    function drawPerMonthChart(rows) {
-      // Count submissions by YYYY-MM
-      const counts = {};
-      rows.forEach(r => {
-        const ts = r.submitted_at;
-        if (!ts) return;
-        const d = new Date(ts);
-        if (isNaN(d)) return;
-        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-        counts[key] = (counts[key] || 0) + 1;
+      // simple bins
+      const min = Math.min(...values);
+      const max = Math.max(...values);
+      const binCount = 8;
+      const step = (max - min) / binCount || 1;
+      const bins = new Array(binCount).fill(0);
+      values.forEach(v => {
+        const i = Math.min(binCount-1, Math.floor((v - min) / step));
+        bins[i]++;
+      });
+      const labels = bins.map((_,i)=> {
+        const a = Math.round(min + i*step);
+        const b = Math.round(min + (i+1)*step);
+        return `${a}–${b}`;
       });
 
-      const labels = Object.keys(counts).sort();
-      const values = labels.map(k => counts[k]);
-
-      const ctx = document.getElementById("perMonthChart").getContext("2d");
+      const ctx = document.getElementById("salaryBar").getContext("2d");
       new Chart(ctx, {
         type: "bar",
-        data: {
-          labels,
-          datasets: [{
-            label: "Submissions",
-            data: values,
-            backgroundColor: "rgba(37, 99, 235, 0.6)",
-            borderColor: "rgba(37, 99, 235, 1)",
-            borderWidth: 1
-          }]
-        },
-        options: {
-          scales: {
-            y: { beginAtZero: true, ticks: { precision: 0 } }
-          }
-        }
+        data: { labels, datasets:[{label:"Count",data:bins,backgroundColor:"rgba(16,185,129,0.8)"}] },
+        options: { responsive:true, scales:{ y:{ beginAtZero:true, ticks:{ precision:0 } } } }
       });
     }
 
-    function drawPerBirthYearChart(rows) {
-      // Count by birth year from date_of_birth
-      const counts = {};
-      rows.forEach(r => {
-        const dob = r.date_of_birth;
-        if (!dob) return;
-        const d = new Date(dob);
-        if (isNaN(d)) return;
-        const year = d.getFullYear();
-        counts[year] = (counts[year] || 0) + 1;
-      });
-
-      const labels = Object.keys(counts).sort();
-      const values = labels.map(k => counts[k]);
-
-      const ctx = document.getElementById("perBirthYearChart").getContext("2d");
-      new Chart(ctx, {
-        type: "bar",
-        data: {
-          labels,
-          datasets: [{
-            label: "Submissions",
-            data: values,
-            backgroundColor: "rgba(16, 185, 129, 0.6)",
-            borderColor: "rgba(16, 185, 129, 1)",
-            borderWidth: 1
-          }]
-        },
-        options: {
-          scales: {
-            y: { beginAtZero: true, ticks: { precision: 0 } }
-          }
-        }
-      });
+    // simple color palette generator
+    function palette(n){
+      const base = ["#f47c20","#003865","#005b9f","#a855f7","#16a34a","#e11d48","#f59e0b","#06b6d4","#7c3aed","#ef4444"];
+      if(n<=base.length) return base.slice(0,n);
+      const out = [];
+      for(let i=0;i<n;i++) out.push(base[i%base.length]);
+      return out;
     }
 
-    loadData();
+    // start
+    load();
   </script>
 </body>
 </html>
