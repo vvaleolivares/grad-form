@@ -64,3 +64,274 @@
       flex: 1;
       display: flex;
       justify-content: center;
+      padding: 1.75rem 1rem 2.5rem;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 760px;
+      background: #ffffff;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      box-shadow: 0 10px 25px rgba(15,23,42,0.08);
+      padding: 1.5rem 1.75rem 1.75rem;
+    }
+
+    .card h1 {
+      margin: 0 0 0.25rem;
+      font-size: 1.5rem;
+      color: var(--usach-blue);
+    }
+    .card > p {
+      margin: 0 0 1.25rem;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    h3.section-title {
+      margin-top: 1.5rem;
+      margin-bottom: 0.5rem;
+      padding-bottom: 0.35rem;
+      border-bottom: 2px solid rgba(244,124,32,0.4);
+      font-size: 1rem;
+      color: var(--usach-blue);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    label {
+      display: block;
+      font-size: 0.9rem;
+      margin-top: 0.9rem;
+      margin-bottom: 0.25rem;
+      color: var(--text-main);
+    }
+    small {
+      color: var(--text-muted);
+      font-size: 0.78rem;
+    }
+
+    input, select, textarea, button {
+      font: inherit;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 0.42rem 0.55rem;
+      border-radius: 6px;
+      border: 1px solid #d1d5db;
+      background: #f9fafb;
+      color: var(--text-main);
+      outline: none;
+      transition: border-color 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--usach-blue-light);
+      box-shadow: 0 0 0 1px rgba(0,56,101,0.3);
+      background: #ffffff;
+    }
+    textarea {
+      min-height: 70px;
+      resize: vertical;
+    }
+
+    button {
+      margin-top: 1.25rem;
+      padding: 0.55rem 1.4rem;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      background: linear-gradient(135deg, var(--usach-orange), var(--usach-orange-dark));
+      color: #ffffff;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      font-size: 0.82rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      box-shadow: 0 8px 18px rgba(244,124,32,0.4);
+      transition: transform 0.1s ease, box-shadow 0.1s ease, filter 0.1s ease;
+    }
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 26px rgba(244,124,32,0.5);
+      filter: brightness(1.03);
+    }
+    button[disabled] {
+      opacity: 0.7;
+      cursor: default;
+      box-shadow: none;
+      transform: none;
+    }
+
+    #status {
+      margin-top: 0.85rem;
+      font-size: 0.86rem;
+    }
+    .ok  { color: #15803d; }
+    .err { color: #b91c1c; }
+
+    @media (max-width: 640px) {
+      .header-inner {
+        padding: 0.6rem 0.75rem;
+      }
+      header img {
+        height: 46px;
+      }
+      .card {
+        padding: 1.3rem 1.1rem 1.5rem;
+      }
+      .card h1 {
+        font-size: 1.3rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <!-- Change src to your actual logo filename or URL -->
+      <img src="fisica.png" alt="Departamento de Física USACH" />
+      <div class="title-block">
+        <p class="title-main">Departamento de Física · Universidad de Santiago de Chile</p>
+        <p class="title-sub">Encuesta de egresadas y egresados</p>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="card">
+      <h1>Encuesta de Resultados de Graduación</h1>
+      <p>
+        Te invitamos a completar este breve formulario sobre tu situación actual después de graduarte.
+        La información se utilizará con fines estadísticos y de mejora de nuestros programas.
+      </p>
+
+      <form id="graduate-outcomes-form">
+        <h3 class="section-title">1. Identidad</h3>
+
+        <label for="first_name">¿Cuál es tu nombre?</label>
+        <input id="first_name" name="first_name" required />
+
+        <label for="last_name">¿Cuál es tu apellido?</label>
+        <input id="last_name" name="last_name" required />
+
+        <label for="personal_email">¿Cuál es tu correo personal preferido después de la graduación?</label>
+        <input id="personal_email" name="personal_email" type="email" required />
+
+        <label for="phone">¿Cuál es tu número de teléfono? <small>(opcional)</small></label>
+        <input id="phone" name="phone" type="tel" />
+
+        <h3 class="section-title">2. Graduación</h3>
+
+        <label for="graduation_date">¿Cuándo te graduaste? <small>(fecha de graduación)</small></label>
+        <input id="graduation_date" name="graduation_date" type="date" />
+
+        <h3 class="section-title">3. Situación actual principal</h3>
+
+        <label for="current_status">¿Qué opción describe mejor tu actividad principal actual?</label>
+        <select id="current_status" name="current_status" required>
+          <option value="">Selecciona…</option>
+          <option value="Employed">Empleada/o (trabajando para un empleador)</option>
+          <option value="Self-employed">Independiente / Emprendedora/or</option>
+          <option value="Masters">Estudios de posgrado – Magíster</option>
+          <option value="PhD">Estudios de posgrado – Doctorado (PhD)</option>
+          <option value="Postdoc">Estudios de posgrado – Postdoctorado</option>
+          <option value="Academic professor">Académica/o (profesora/or)</option>
+          <option value="Internship / Traineeship">Práctica / Pasantía</option>
+          <option value="Seeking employment">Buscando trabajo (desempleada/o)</option>
+          <option value="Not seeking work">No buscando trabajo (ej. familia, viaje, salud)</option>
+          <option value="Other">Otra situación (por favor especifica)</option>
+        </select>
+
+        <label for="current_status_other">Si seleccionaste "Otra situación", por favor especifica:</label>
+        <input id="current_status_other" name="current_status_other" />
+
+        <h3 class="section-title">4. Si estás empleada/o o trabajas de forma independiente</h3>
+
+        <label for="job_title">¿Cuál es tu cargo (job title)?</label>
+        <input id="job_title" name="job_title" />
+
+        <label for="employer_name">¿Cuál es el nombre de tu empleador(a) o institución?</label>
+        <input id="employer_name" name="employer_name" />
+
+        <label for="work_country">¿En qué país trabajas actualmente?</label>
+        <input id="work_country" name="work_country" />
+
+        <label for="position_start_date">¿Cuándo comenzaste este cargo?</label>
+        <input id="position_start_date" name="position_start_date" type="date" />
+
+        <label for="salary_annual">¿Cuál es tu salario anual aproximado (antes de impuestos)? <small>(opcional, solo número)</small></label>
+        <input id="salary_annual" name="salary_annual" type="number" step="0.01" min="0" placeholder="ej. 18000000" />
+
+        <button type="submit">Enviar respuestas</button>
+        <div id="status"></div>
+      </form>
+    </div>
+  </main>
+
+  <!-- Supabase JS -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+
+  <script>
+    // Use your own values from Supabase Settings → API
+    const SUPABASE_URL = "https://boxeompdpkejqpaydgtz.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_G28HSK483SvF3tZnZ2nC8Q_kiZwyj0Y";
+
+    const TABLE_NAME = "graduate_outcomes_survey";
+
+    const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const form = document.getElementById("graduate-outcomes-form");
+    const statusEl = document.getElementById("status");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      statusEl.textContent = "";
+      statusEl.className = "";
+
+      const submitBtn = form.querySelector("button[type='submit']");
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Enviando…";
+
+      const formData = new FormData(form);
+      const payload = {
+        first_name: formData.get("first_name") || null,
+        last_name: formData.get("last_name") || null,
+        personal_email: formData.get("personal_email") || null,
+        phone: formData.get("phone") || null,
+        graduation_date: formData.get("graduation_date") || null,
+        current_status: formData.get("current_status") || null,
+        current_status_other: formData.get("current_status_other") || null,
+        job_title: formData.get("job_title") || null,
+        employer_name: formData.get("employer_name") || null,
+        work_country: formData.get("work_country") || null,
+        position_start_date: formData.get("position_start_date") || null,
+        salary_annual: formData.get("salary_annual")
+          ? Number(formData.get("salary_annual"))
+          : null
+      };
+
+      const { error } = await client.from(TABLE_NAME).insert(payload);
+
+      if (error) {
+        console.error(error);
+        statusEl.textContent = "Ocurrió un error al enviar el formulario. Intenta nuevamente.";
+        statusEl.className = "err";
+      } else {
+        statusEl.textContent = "¡Gracias! Tus respuestas han sido registradas.";
+        statusEl.className = "ok";
+        form.reset();
+      }
+
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Enviar respuestas";
+    });
+  </script>
+</body>
+</html>
+
+
+
+
+
